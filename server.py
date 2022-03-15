@@ -1,23 +1,28 @@
 import socket
 import config
 
-# połączenie TCP
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((config.HOST, config.PORT))
 
-# jeśli więcej niż 5 połączeń czeka to odrzucamy nowe połączenia
-server.listen(5)
+server.listen()
 
-# nie możemy jeszcze obsługiwać wielu połączeń na raz
-while True:
-    # metoda accept() zwraca adres klienta, który chce się połączyć
-    # oraz socket, dzięki któremu możemy porozumiewać się z klientem
-    communication_socket, address = server.accept()
-    print(f"Connected to {address}")
-    message = communication_socket.recv(2*config.PACKAGE_SIZE).decode('utf-8')
-    print(f"Message from client is: {message}")
-    communication_socket.send(f"Got your message! Thank you!".encode('utf-8'))
-    communication_socket.close()
-    print(f"Connection with {address} closed!")
+client, addr = server.accept()
 
+done = False
+send_msg = ''
 
+while not done:
+    msg = client.recv(2*config.PACKAGE_SIZE).decode('utf-8')
+    if send_msg == 'quit' or msg == 'quit':
+        done = True
+        if msg == 'quit':
+            print("Client is quiting...")
+        else:
+            print("Closing connection...")
+    else:
+        print(msg)
+        send_msg = input("Message: ")
+        client.send(send_msg.encode('utf-8'))
+
+client.close()
+server.close()
