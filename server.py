@@ -30,7 +30,7 @@ def handle(client):
                     name_to_ban = msg.decode('utf-8')[4:]
                     if name_to_ban != 'admin':
                         kick_user(name_to_ban)
-                        with open('bans.txt', 'a') as f:
+                        with open('bans.txt', 'a+') as f:
                             f.write(f'{name_to_ban}\n')
                         print(f'{name_to_ban} was banned!')
                 else:
