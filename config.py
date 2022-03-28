@@ -1,7 +1,7 @@
 # Connection configuration
 import socket
 
-HOST = 'localhost'      # our IP address
+HOST = 'localhost'          # our IP address
 ADDRESS = None              # IP address typed by user
 PORT = 9090                 # mutual port
 

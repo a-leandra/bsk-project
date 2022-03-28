@@ -1,28 +1,52 @@
+import threading
 import socket
 import config
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((config.HOST, config.PORT))
-
 server.listen()
 
-client, addr = server.accept()
+clients = []
+nicknames = []
 
-done = False
-send_msg = ''
 
-while not done:
-    msg = client.recv(2*config.PACKAGE_SIZE).decode('utf-8')
-    if send_msg == 'quit' or msg == 'quit':
-        done = True
-        if msg == 'quit':
-            print("Client is quiting...")
-        else:
-            print("Closing connection...")
-    else:
-        print(msg)
-        send_msg = input("Message: ")
-        client.send(send_msg.encode('utf-8'))
+def broadcast(message):
+    for client in clients:
+        client.send(message)
 
-client.close()
-server.close()
+
+def handle(client):
+    while True:
+        try:
+            message = client.recv(config.PACKAGE_SIZE)
+            broadcast(message)
+        except:
+            index = clients.index(client)
+            clients.remove(client)
+            client.close()
+            nickname = nicknames[index]
+            broadcast(f'{nickname} left the chat!'.encode('utf-8'))
+            nicknames.remove(nickname)
+            break
+
+
+def receive():
+    while True:
+        client, address = server.accept()
+        print(f"Connected with {str(address)}")
+
+        client.send('NICK'.encode('utf-8'))
+        nickname = client.recv(config.PACKAGE_SIZE).decode('utf-8')
+        nicknames.append(nickname)
+        clients.append(client)
+
+        print(f'Nickname of the client is {nickname}')
+        broadcast(f'{nickname} joined the chat!'.encode('utf-8'))
+        client.send('Connected to the server!'.encode('utf-8'))
+
+        thread = threading.Thread(target=handle, args=(client,))
+        thread.start()
+
+
+print("Server is listening...")
+receive()
